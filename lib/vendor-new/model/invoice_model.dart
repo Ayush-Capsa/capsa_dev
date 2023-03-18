@@ -29,7 +29,10 @@ class InvoiceModel {
       invStatus,
       payment_status,
       ilcStatus,
-      status;
+      status,
+      extendedDueDate;
+
+  List<dynamic> childInvoice;
 
   String noOfCustomer = '0';
   String amtPerCustomer = '0';
@@ -65,6 +68,8 @@ class InvoiceModel {
     this.payment_status,
     this.ilcStatus,
     this.amtPerCustomer,
+    this.childInvoice,
+    this.extendedDueDate
 
   });
 
@@ -84,7 +89,8 @@ class InvoiceModel {
       'tenureDaysDiff': tenureDaysDiff,
       'fileType': fileType,
       'bvnNo': bvnNo,
-      'cuGst': cuGst
+      'cuGst': cuGst,
+      'extDueDate' : extendedDueDate ?? invDueDate,
     };
     if (noOfCustomer != null) _obj['noOfCustomer'] = noOfCustomer;
     if (amtPerCustomer != null) _obj['amtPerCustomer'] = amtPerCustomer;

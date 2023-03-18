@@ -26,7 +26,9 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 class AddInvoice extends StatefulWidget {
-  AddInvoice({Key key,}) : super(key: key);
+  AddInvoice({
+    Key key,
+  }) : super(key: key);
 
   @override
   State<AddInvoice> createState() => _AddInvoiceState();
@@ -38,16 +40,21 @@ class _AddInvoiceState extends State<AddInvoice> {
   final Box box = Hive.box('capsaBox');
   final dueDateCont = TextEditingController();
   final dateCont = TextEditingController();
+  final extendedDueDateCont = TextEditingController();
   final fileCont = TextEditingController(text: '');
   DateTime _selectedDate;
   DateTime _selectedDueDate;
+  DateTime _extentedDueDate;
   var _cuGst;
+  bool showExtendedDate = false;
 
   bool saving = false;
 
   final rateController2 = TextEditingController(text: '');
 
   dynamic companyDetails = null;
+
+  final GlobalKey<FormFieldState> _key = GlobalKey<FormFieldState>();
 
   Future<dynamic> getCompanyNames(BuildContext context) async {
     if (companyDetails == null) {
@@ -63,6 +70,21 @@ class _AddInvoiceState extends State<AddInvoice> {
   int navigate() {
     Beamer.of(context).beamToNamed('/confirmInvoice');
     return 1;
+  }
+
+  void resetAnchor() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      anchor = null;
+      anchorController.text = '';
+      _cuGst = '';
+
+      setState(() {
+        showExtendedDate = true;
+      });
+      setState(() {
+        showExtendedDate = false;
+      });
+    });
   }
 
   void calculateRate() {
@@ -126,10 +148,18 @@ class _AddInvoiceState extends State<AddInvoice> {
 
     if (newSelectedDate != null) {
       _selectedDueDate = newSelectedDate;
+
       dueDateCont
         ..text = DateFormat.yMMMd().format(_selectedDueDate)
         ..selection = TextSelection.fromPosition(TextPosition(
             offset: dueDateCont.text.length, affinity: TextAffinity.upstream));
+
+      if (showExtendedDate == true) {
+        _extentedDueDate =
+            newSelectedDate.add(Duration(days: grade == 'C' ? 30 : 45));
+        extendedDueDateCont.text = DateFormat.yMMMd().format(_extentedDueDate);
+      }
+
       calculateRate();
     }
   }
@@ -174,6 +204,7 @@ class _AddInvoiceState extends State<AddInvoice> {
   final detailsController = TextEditingController(text: '');
   final currencyController = TextEditingController(text: '');
   var anchor;
+  dynamic grade;
 
   // var anchor, cacAddress, invNo, po, terms;
 
@@ -236,6 +267,13 @@ class _AddInvoiceState extends State<AddInvoice> {
       _selectedDueDate = invoiceFormData["_selectedDueDate"];
       file = invoiceFormData["file"];
       _cuGst = invoiceFormData["cuGst"];
+      showExtendedDate = invoiceFormData["showExtendedDueDate"];
+      grade = invoiceFormData["grade"];
+      if (showExtendedDate) {
+        _extentedDueDate =
+            _selectedDueDate.add(Duration(days: grade == 'C' ? 30 : 45));
+        extendedDueDateCont.text = DateFormat.yMMMd().format(_extentedDueDate);
+      }
     }
 
     //invoiceProvider.splitInvoice('DH001', '50000000');
@@ -289,6 +327,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
                     var _items = _data['data'];
                     Map<String, bool> _isBlackListed = {};
+                    Map<String, String> anchorGrade = {};
 
                     var anchorNameList = [];
 
@@ -303,6 +342,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     ? true
                                     : false
                                 : false;
+                        anchorGrade[element['name'].toString()] =
+                            element['grade'] ?? '';
                       });
                     } else {
                       return Center(
@@ -356,6 +397,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               items:
                                                   term.map((String category) {
                                                 return DropdownMenuItem(
+                                                  //key: _key,
                                                   value: category,
                                                   child:
                                                       Text(category.toString()),
@@ -378,8 +420,158 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                       anchorController.text =
                                                           element1[
                                                               'name_address'];
+                                                      grade =
+                                                          anchorGrade[anchor];
+                                                      capsaPrint(
+                                                          'Grade initiated : ${anchor} $grade');
                                                       _cuGst =
                                                           element1['cu_gst'];
+
+                                                      if (grade == 'D' ||
+                                                          grade == 'C') {
+                                                        showDialog(
+                                                            context: context,
+                                                            barrierDismissible:
+                                                                true,
+                                                            builder:
+                                                                (BuildContext
+                                                                    context) {
+                                                              return AlertDialog(
+                                                                shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.all(
+                                                                            Radius.circular(32.0))),
+                                                                backgroundColor:
+                                                                    Color
+                                                                        .fromRGBO(
+                                                                            245,
+                                                                            251,
+                                                                            255,
+                                                                            1),
+                                                                content:
+                                                                    Container(
+                                                                  constraints: Responsive
+                                                                          .isMobile(
+                                                                              context)
+                                                                      ? BoxConstraints(
+                                                                          minHeight:
+                                                                              300,
+                                                                        )
+                                                                      : BoxConstraints(
+                                                                          minHeight:
+                                                                              220,
+                                                                          maxWidth:
+                                                                              584),
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: Color
+                                                                        .fromRGBO(
+                                                                            245,
+                                                                            251,
+                                                                            255,
+                                                                            1),
+                                                                  ),
+                                                                  child:
+                                                                      Padding(
+                                                                    padding:
+                                                                        const EdgeInsets.fromLTRB(
+                                                                            6,
+                                                                            8,
+                                                                            6,
+                                                                            8),
+                                                                    child:
+                                                                        Column(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .center,
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .center,
+                                                                      mainAxisSize:
+                                                                          MainAxisSize
+                                                                              .min,
+                                                                      children: [
+                                                                        SizedBox(
+                                                                          height:
+                                                                              8,
+                                                                        ),
+                                                                        Image.asset(
+                                                                            'assets/icons/warning.png'),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              22,
+                                                                        ),
+                                                                        Text(
+                                                                            "Your anchor is a Grade $grade Anchor and as such your tenure date and invoice due date has been extended by " +
+                                                                                (grade == 'C' ? '30' : '45') +
+                                                                                " days.\n\nThis will affect the quality of your bid rates. Do you wish to continue with your invoice upload?",
+                                                                            textAlign: TextAlign.center),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              30,
+                                                                        ),
+                                                                        Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
+                                                                          children: [
+                                                                            InkWell(
+                                                                              onTap: () {
+                                                                                anchor = null;
+                                                                                anchorController.text = '';
+                                                                                _cuGst = '';
+                                                                                _formKey.currentState.reset();
+                                                                                Navigator.pop(context);
+                                                                                //capsaPrint('${anchor} ${anchorController.text}');
+                                                                              },
+                                                                              child: Container(
+                                                                                  width: Responsive.isMobile(context) ? 100 : 160,
+                                                                                  height: 49,
+                                                                                  decoration: BoxDecoration(border: Border.all(width: 2, color: HexColor('#0098DB')), borderRadius: BorderRadius.all(Radius.circular(10))),
+                                                                                  child: Center(
+                                                                                    child: Text(
+                                                                                      'Cancel',
+                                                                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: HexColor('#0098DB'), fontSize: Responsive.isMobile(context) ? 12 : 18,),
+                                                                                    ),
+                                                                                  )),
+                                                                            ),
+                                                                            InkWell(
+                                                                              onTap: () async {
+                                                                                Navigator.pop(context);
+                                                                                setState(() {
+                                                                                  showExtendedDate = true;
+                                                                                });
+                                                                                // Beamer.of(context)
+                                                                                //     .beamToNamed('/confirmInvoice');
+
+                                                                                // showToast('Confirm invoice Details',
+                                                                                //     context,
+                                                                                //     type: "info");
+                                                                              },
+                                                                              child: Container(
+                                                                                  width: Responsive.isMobile(context) ? 100 : 160,
+                                                                                  height: 49,
+                                                                                  decoration: BoxDecoration(color: HexColor('#0098DB'), borderRadius: BorderRadius.all(Radius.circular(10))),
+                                                                                  child: Center(
+                                                                                    child: Text(
+                                                                                      'Yes, proceed',
+                                                                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: Colors.white, fontSize: Responsive.isMobile(context) ? 12 : 18,),
+                                                                                    ),
+                                                                                  )),
+                                                                            )
+                                                                          ],
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            });
+                                                      } else {
+                                                        setState(() {
+                                                          showExtendedDate =
+                                                              false;
+                                                        });
+                                                      }
 
                                                       // capsaPrint(cacAddress);
 
@@ -443,11 +635,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-
                                         Flexible(
                                           child: UserTextFormField(
-                                            label: "Invoice No",
-                                            hintText: "Invoice umber",
+                                            label: "Invoice Number",
+                                            hintText: "Invoice Number",
                                             controller: invoiceNoController,
                                             onChanged: (v) {
                                               String s = v;
@@ -498,8 +689,9 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           child: UserTextFormField(
                                             label: "Invoice Amount",
                                             hintText: "Enter invoice amount",
-                                            prefixIcon:
-                                            getCurrencyIcon('NGN'),
+                                            prefixIcon: getCurrencyIcon('NGN'),
+                                            note:
+                                                'Invoice amount should not include\nVAT fee',
                                             // Image.asset(
                                             //     "assets/images/currency.png"),
                                             controller: invoiceAmtController,
@@ -507,21 +699,21 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               calculateRate();
                                             },
                                             keyboardType:
-                                            TextInputType.numberWithOptions(
-                                                decimal: true),
+                                                TextInputType.numberWithOptions(
+                                                    decimal: true),
                                             inputFormatters: [
                                               FilteringTextInputFormatter.allow(
                                                   RegExp(r"[0-9.]")),
                                               TextInputFormatter.withFunction(
-                                                      (oldValue, newValue) {
-                                                    try {
-                                                      final text = newValue.text;
-                                                      if (text.isNotEmpty)
-                                                        double.parse(text);
-                                                      return newValue;
-                                                    } catch (e) {}
-                                                    return oldValue;
-                                                  }),
+                                                  (oldValue, newValue) {
+                                                try {
+                                                  final text = newValue.text;
+                                                  if (text.isNotEmpty)
+                                                    double.parse(text);
+                                                  return newValue;
+                                                } catch (e) {}
+                                                return oldValue;
+                                              }),
                                             ],
                                           ),
                                         ),
@@ -560,7 +752,28 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         ),
                                       ],
                                     ),
-
+                                    if (showExtendedDate)
+                                      OrientationSwitcher(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Flexible(
+                                            child: UserTextFormField(
+                                              label: "Extended Due Date",
+                                              suffixIcon: Icon(
+                                                  Icons.date_range_outlined),
+                                              readOnly: true,
+                                              controller: extendedDueDateCont,
+                                              hintText:
+                                                  "Extended Invoice Due Date",
+                                              keyboardType:
+                                                  TextInputType.number,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     OrientationSwitcher(
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
@@ -697,7 +910,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                           context) {
                                                         return AlertDialog(
                                                           content: const Text(
-                                                              'Invalid Format Selected. Please Select Another File'),
+                                                              'Invalid Format Selected. Please select a PDF or JPG file'),
                                                           actions: <Widget>[
                                                             FlatButton(
                                                                 child: Text(
@@ -753,105 +966,104 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     SizedBox(height: 16),
                                     InkWell(
                                       onTap: () async {
-                                        // Beamer.of(context).beamToNamed('/confirmInvoice');
-                                        // showPopupActionInfo(
-                                        //   context,
-                                        //   heading: "Congratulations! Your invoice has been saved and presented. ",
-                                        //   info: "When your Anchor approves the invoice, you will start receiving bids from Investors.",
-                                        //   buttonText: "View Pending Invoice",
-                                        //   onTap: () {
-                                        //     Navigator.of(context, rootNavigator: true).pop();
-                                        //     invoiceProvider.resetInvoiceFormData();
-                                        //     Beamer.of(context).beamToNamed('/pending-invoices');
-                                        //   },
-                                        // ); return;
-
                                         setState(() {
                                           saving = true;
                                         });
 
                                         if (_formKey.currentState.validate()) {
-                                          dynamic invoiceFormData = {
-                                            "invoiceNo":
-                                                invoiceNoController.text,
-                                            "poNumber": poController.text,
-                                            "tenure": tenureController.text,
-                                            "invAmt": invoiceAmtController.text,
-                                            "butAmt": buyAmtController.text,
-                                            "details": detailsController.text,
-                                            "anchor": anchor,
-                                            "anchorAddress":
-                                                anchorController.text,
-                                            "dateCont": dateCont.text,
-                                            "tenureDaysDiff":
-                                                tenureDaysDiff.toString(),
-                                            "rate": rateController2.text,
-                                            "dueDateCont": dueDateCont.text,
-                                            "fileCont": fileCont.text,
-                                            "_selectedDate": _selectedDate,
-                                            "_selectedDueDate":
-                                                _selectedDueDate,
-                                            "file": file,
-                                            "cuGst": _cuGst,
-                                          };
+                                          {
+                                            dynamic invoiceFormData = {
+                                              "invoiceNo":
+                                                  invoiceNoController.text,
+                                              "poNumber": poController.text,
+                                              "tenure": tenureController.text,
+                                              "invAmt":
+                                                  invoiceAmtController.text,
+                                              "butAmt": buyAmtController.text,
+                                              "details": detailsController.text,
+                                              "anchor": anchor,
+                                              "anchorAddress":
+                                                  anchorController.text,
+                                              "dateCont": dateCont.text,
+                                              "tenureDaysDiff":
+                                                  tenureDaysDiff.toString(),
+                                              "rate": rateController2.text,
+                                              "dueDateCont": dueDateCont.text,
+                                              "extendedDueDateString": showExtendedDate ? extendedDueDateCont.text : dueDateCont.text,
+                                              "fileCont": fileCont.text,
+                                              "_selectedDate": _selectedDate,
+                                              "_selectedDueDate":
+                                                  _selectedDueDate,
+                                              "file": file,
+                                              "cuGst": _cuGst,
+                                              "showExtendedDueDate":
+                                                  showExtendedDate,
+                                              "grade": grade,
+                                            };
 
-                                          // capsaPrint(invoiceFormData);
+                                            // capsaPrint(invoiceFormData);
 
-                                          invoiceProvider.setInvoiceFormData(
-                                              invoiceFormData);
+                                            invoiceProvider.setInvoiceFormData(
+                                                invoiceFormData);
 
-                                          dynamic splitData =
-                                              await invoiceProvider
-                                                  .splitInvoice(
-                                                      invoiceNoController.text,
-                                                      invoiceAmtController
-                                                          .text);
+                                            dynamic splitData =
+                                                await invoiceProvider
+                                                    .splitInvoice(
+                                                        invoiceNoController
+                                                            .text,
+                                                        invoiceAmtController
+                                                            .text);
 
-                                          if (splitData['isSplit'] == 1) {
-                                            setState(() {
-                                              saving = false;
-                                            });
-                                            print('split warning');
-                                            showDialog(
-                                                // barrierColor: Colors.transparent,
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  functionBack() {
-                                                    Navigator.pop(context);
-                                                  }
+                                            if (splitData['isSplit'] == 1) {
+                                              setState(() {
+                                                saving = false;
+                                              });
+                                              print('split warning');
+                                              showDialog(
+                                                  // barrierColor: Colors.transparent,
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    functionBack() {
+                                                      Navigator.pop(context);
+                                                    }
 
-                                                  return AlertDialog(
-                                                      backgroundColor:
-                                                          Colors.transparent,
-                                                      shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.all(
-                                                                  Radius.circular(
-                                                                      32.0))),
-                                                      content:
-                                                          SplitInvoiceWarning(
-                                                        invNo:
-                                                            invoiceNoController
-                                                                .text,
-                                                        nav: navigate,
-                                                      ));
-                                                }).then((value) => Beamer.of(
-                                                    context)
-                                                .beamToNamed(
-                                                    '/confirmInvoice'));
-                                          } else {
-                                            Beamer.of(context).beamToNamed(
-                                                '/confirmInvoice');
+                                                    return AlertDialog(
+                                                        backgroundColor:
+                                                            Colors.transparent,
+                                                        shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.all(
+                                                                    Radius.circular(
+                                                                        32.0))),
+                                                        content:
+                                                            SplitInvoiceWarning(
+                                                          invNo:
+                                                              invoiceNoController
+                                                                  .text,
+                                                          nav: navigate,
+                                                        ));
+                                                  }).then((value) => Beamer.of(
+                                                      context)
+                                                  .beamToNamed(
+                                                      '/confirmInvoice'));
+                                            } else {
+                                              Beamer.of(context).beamToNamed(
+                                                  '/confirmInvoice');
+                                            }
+
+                                            // Beamer.of(context)
+                                            //     .beamToNamed('/confirmInvoice');
+
+                                            // showToast('Confirm invoice Details',
+                                            //     context,
+                                            //     type: "info");
                                           }
-
-                                          // Beamer.of(context)
-                                          //     .beamToNamed('/confirmInvoice');
-
-                                          // showToast('Confirm invoice Details',
-                                          //     context,
-                                          //     type: "info");
                                         }
+
+                                        setState(() {
+                                          saving = false;
+                                        });
                                       },
                                       child: Container(
                                         width: 230,
@@ -949,7 +1161,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   ],
                                 )),
                             SizedBox(
-                              width: 25,
+                              height: 40,
                             ),
                             Flexible(
                                 flex: 1,
@@ -1007,15 +1219,15 @@ class _AddInvoiceState extends State<AddInvoice> {
         width: MediaQuery.of(context).size.width,
         height: 60,
         decoration: BoxDecoration(
-          color: Color.fromRGBO(255, 255, 255, 1),
-        ),
+            //color: Color.fromRGBO(255, 255, 255, 1),
+            ),
         child: Center(
           child: Stack(children: <Widget>[
             Positioned(
                 top: 14,
                 left: 104,
                 child: Container(
-                    width: 80,
+                    width: 180,
                     height: 4,
                     decoration: BoxDecoration(
                       color: Color.fromRGBO(130, 130, 130, 1),
@@ -1058,7 +1270,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                 )),
             Positioned(
                 top: 0,
-                left: 184,
+                left: 264,
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(

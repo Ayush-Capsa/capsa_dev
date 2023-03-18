@@ -1,6 +1,9 @@
+import 'package:capsa/common/responsive.dart';
+import 'package:capsa/providers/profile_provider.dart';
 import 'package:capsa/anchor/pages/homepage.dart';
 import 'package:capsa/anchor/provider/anchor_action_providers.dart';
 import 'package:capsa/functions/logout.dart';
+import 'package:capsa/pages/change_password_vendor_investor.dart';
 import 'package:flutter/material.dart';import 'package:capsa/functions/custom_print.dart';
 import 'package:capsa/anchor/Components/buttonStyles.dart';
 import 'package:capsa/anchor/Invoice/invoices.dart';
@@ -8,6 +11,8 @@ import 'package:capsa/anchor/Payments/payments.dart';
 import 'package:capsa/anchor/Profile/profile.dart';
 import 'package:capsa/anchor/Trade/trade.dart';
 import 'package:provider/provider.dart';
+
+import '../functions/hexcolor.dart';
 
 class anchorHomePage extends StatefulWidget {
   const anchorHomePage({Key key}) : super(key: key);
@@ -18,6 +23,116 @@ class anchorHomePage extends StatefulWidget {
 
 class _anchorHomePageState extends State<anchorHomePage> {
   var _selectedIndex = 0;
+
+  void checkPassword() async{
+    dynamic response = await Provider.of<AnchorActionProvider>(context, listen: false)
+        .checkLastPasswordReset();
+
+    capsaPrint('\n\nCheck passwrod : $response');
+
+    if(response['msg'] != 'success') {
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            // title: Text(
+            //   '',
+            //   style: TextStyle(
+            //     fontSize: 24,
+            //     fontWeight: FontWeight.bold,
+            //     color: Theme.of(context).primaryColor,
+            //   ),
+            // ),
+            content: Container(
+              // width: 800,
+                height: Responsive.isMobile(context)?340:300,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children:  [
+
+                      SizedBox(height: 12,),
+
+                      Image.asset('assets/icons/warning.png'),
+
+                      SizedBox(height: 12,),
+
+                      Text(
+                        'Action Required',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      SizedBox(height: 12,),
+
+                      Text(
+                        'Your GetCapsa Password has not been changed for more than 90 days!\nKindly change password to continue.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      SizedBox(height: 12,),
+
+                      InkWell(
+                        onTap: (){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ChangeNotifierProvider(
+                                    create: (BuildContext
+                                    context) =>
+                                        ProfileProvider(),
+                                    child:ChangePasswordPageVI(canGoBack: false,),),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: Responsive.isMobile(context)?140 : 220,
+                          decoration: BoxDecoration(
+                              color: HexColor('#0098DB'),
+                              borderRadius: BorderRadius.all(Radius.circular(10))
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Text(
+                                'Okay',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    ],
+                  ),
+                )
+            ),
+            //actions: <Widget>[],
+          ));
+    }
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    checkPassword();
+  }
 
   @override
   Widget build(BuildContext context) {

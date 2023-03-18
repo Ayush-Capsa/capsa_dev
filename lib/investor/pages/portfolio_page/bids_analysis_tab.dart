@@ -233,12 +233,21 @@ class _BidsAnalysisState extends State<BidsAnalysis> {
         );
 
         row.add(
-          DateFormat('d MMM, y').format(bid.discountedDate).toString(),
+          DateFormat('d MMM, y').format(
+              DateFormat(
+                  "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                  .parse(bid
+                  .effectiveDueDate)),
         );
         row.add(
-          daysBetween(DateTime.parse(bid.startDate),
-                  DateTime.parse(bid.effectiveDueDate))
-              .toString(),
+          daysBetween(
+            bid.discountedDate,
+            DateFormat(
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                .parse(bid
+                .effectiveDueDate),
+
+          ).toString(),
         );
         row.add(statusString(bid));
         rows.add(row);
@@ -279,6 +288,7 @@ class _BidsAnalysisState extends State<BidsAnalysis> {
                 //   SizedBox(
                 //     height: 22,
                 //   ),
+                //if(dataSource.length>0)
                 Container(
                   // padding: EdgeInsets.all((!Responsive.isMobile(context)) ? 12 : 1.0),
                   // color: Colors.white,
@@ -591,6 +601,7 @@ class _BidsAnalysisState extends State<BidsAnalysis> {
                               Provider.of<BidHistoryProvider>(context,
                                   listen: false);
                           dataSource = bidHistoryProvider.bidHistoryDataList;
+                          //dataSource = [];
 
                           return Container(
                             width: double.infinity,
@@ -649,7 +660,8 @@ class _BidsAnalysisState extends State<BidsAnalysis> {
                                           )
                                       ],
                                     )
-                                  : DataTable(
+                                  :
+                              dataSource.length > 0 ? DataTable(
                                       dataRowHeight: 60,
                                       columns: dataTableColumn([
                                         "S/N",
@@ -736,7 +748,34 @@ class _BidsAnalysisState extends State<BidsAnalysis> {
                                             ],
                                           ),
                                       ],
-                                    ),
+                                    ):
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 62,
+                                  ),
+                                  Container(
+                                      child: Image.asset(
+                                        'assets/icons/No Bids Placed.png',
+                                        height: 229,
+                                        width: 178,
+                                      )),
+                                  SizedBox(
+                                    height: 24,
+                                  ),
+                                  Text(
+                                    'No Overdue Invoices',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: HexColor('#333333')),
+                                  ),
+                                  SizedBox(
+                                    height: 12,
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         } else if (!snapshot.hasData) {

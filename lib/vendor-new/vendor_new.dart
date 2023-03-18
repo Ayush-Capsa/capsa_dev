@@ -19,7 +19,7 @@ import 'package:capsa/vendor-new/pages/invoice_builder_page.dart';
 import 'package:capsa/vendor-new/pages/invoice_list_page.dart';
 import 'package:capsa/vendor-new/pages/live_deals/live_deals_page.dart';
 import 'package:capsa/vendor-new/pages/upload_kyc_docs.dart';
-import 'package:capsa/vendor-new/pages/upload-account-letter.dart';
+import 'package:capsa/vendor-new/pages/account-letter/upload_account_letter_profile.dart';
 import 'package:capsa/vendor-new/provider/invoice_builder_provider.dart';
 import 'package:capsa/widgets/capsaapp/generated_mobilemenunavigationsvendorwidget/Generated_MobileMenuNavigationsVendorWidget.dart';
 import 'package:capsa/pages/account_page.dart';
@@ -50,8 +50,10 @@ import 'package:capsa/widgets/DesktopMainMenuWidget.dart';
 // import 'package:capsa/vendor-new/widgets/TopBarWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:capsa/functions/custom_print.dart';
+import 'package:local_session_timeout/local_session_timeout.dart';
 import 'package:provider/provider.dart';
 
+import '../functions/logout.dart';
 import '../main.dart';
 // import 'package:hive/hive.dart';
 
@@ -94,6 +96,7 @@ class _VendorNewAppState extends State<VendorNewApp> {
     // TODO: implement initState
     super.initState();
     // capsaPrint("VendorNewApp");
+    var userData = Map<String, dynamic>.from(box.get('userData'));
     routerDelegate = BeamerDelegate(
       initialPath: '/home',
       locationBuilder: RoutesLocationBuilder(
@@ -102,6 +105,7 @@ class _VendorNewAppState extends State<VendorNewApp> {
             final beamerKey = GlobalKey<BeamerState>();
 
             return Scaffold(
+              resizeToAvoidBottomInset: false,
               body: Beamer(
                 key: beamerKey,
                 routerDelegate: BeamerDelegate(
@@ -124,9 +128,10 @@ class _VendorNewAppState extends State<VendorNewApp> {
                           type: BeamPageType.fadeTransition,
                           child: VendorMain(
                               pageUrl: "/home",
-                              mobileTitle: "👋 Capsa,",
+                              mobileTitle: "Hello ${userData['name']} 👋",
                               mobileSubTitle:
                                   "Welcome, enjoy alternative financing!",
+                              showLogo: true,
                               body: VendorHomePage()
 
                               // ConfirmInvoicePage()
@@ -196,13 +201,13 @@ class _VendorNewAppState extends State<VendorNewApp> {
                         final id = state.pathParameters['id'];
                         return BeamPage(
                           key: ValueKey('vendor-bids-view'),
-                          title: 'Bid\'s Details',
+                          title: 'Bid Details',
                           // popToNamed: '/',
                           type: BeamPageType.fadeTransition,
                           child: VendorMain(
                             menuList: false,
                             pageUrl: "/bids/details/" + id,
-                            mobileTitle: "Bid's Details",
+                            mobileTitle: "Bid Details",
                             body: BidsDetailsPage(id),
                             backButton: true,
                           ),
@@ -501,6 +506,21 @@ class _VendorNewAppState extends State<VendorNewApp> {
 
   @override
   Widget build(BuildContext context) {
+
+    final sessionConfig = SessionConfig(
+        invalidateSessionForAppLostFocus: const Duration(seconds: 5),
+        invalidateSessionForUserInactiviity: const Duration(seconds: 5));
+
+    sessionConfig.stream.listen((SessionTimeoutState timeoutEvent) {
+      if (timeoutEvent == SessionTimeoutState.userInactivityTimeout) {
+        logout(context);
+      } else if (timeoutEvent == SessionTimeoutState.appFocusTimeout) {
+        logout(context);
+        // handle user  app lost focus timeout
+        // Navigator.of(context).pushNamed("/auth");
+      }
+    });
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<VendorActionProvider>(
@@ -519,7 +539,11 @@ class _VendorNewAppState extends State<VendorNewApp> {
           create: (_) => InvoiceBuilderProvider(),
         ),
       ],
-      child: MaterialApp.router(
+      child:
+      SessionTimeoutManager(
+      sessionConfig: sessionConfig,
+    child:
+      MaterialApp.router(
         onGenerateTitle: (context) {
           return 'Dashboard';
         },
@@ -530,7 +554,7 @@ class _VendorNewAppState extends State<VendorNewApp> {
         routerDelegate: routerDelegate,
         debugShowCheckedModeBanner: false,
         theme: appTheme,
-      ),
+      ),)
     );
   }
 }
@@ -544,6 +568,7 @@ class VendorMain extends StatelessWidget {
   final String mobileTitle;
   final String mobileSubTitle;
   final String backUrl;
+  final bool showLogo;
 
   VendorMain(
       {this.pageUrl,
@@ -554,6 +579,7 @@ class VendorMain extends StatelessWidget {
         this.menuList,
         this.backButton,
         this.pop = false,
+        this.showLogo = false,
         Key key})
       : super(key: key);
 
@@ -807,7 +833,12 @@ class VendorMain extends StatelessWidget {
 
     var invMenu2 = invmenu ? invBottomMenu(_invoiceMenuList, context) : null;
 
+    var userData = Map<String, dynamic>.from(box.get('userData'));
+
+    capsaPrint('User Detrails : $userData\n\n\n');
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       bottomNavigationBar: (Responsive.isMobile(context))
           ? (_backButton)
           ? invMenu2
@@ -819,6 +850,16 @@ class VendorMain extends StatelessWidget {
         child: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: HexColor("#F5FBFF"),
+          actions: [
+            showLogo?Padding(
+              padding: const EdgeInsets.only(top: 12, right: 8),
+              child: Image.asset(
+                "assets/images/Ellipse 3.png",
+                width: 35,
+                height: 35,
+              ),
+            ):Container(),
+          ],
           title: Column(
             children: [
               SizedBox(
@@ -860,7 +901,7 @@ class VendorMain extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mobileTitle != null ? mobileTitle : '👋 Capsa,',
+                        mobileTitle != null ? mobileTitle : 'Hello ${userData['name']} 👋',
                         textAlign: TextAlign.left,
                         style: TextStyle(
                             color: Color.fromRGBO(51, 51, 51, 1),

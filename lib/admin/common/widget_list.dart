@@ -8,6 +8,7 @@ import 'package:capsa/admin/screens/PendingRevenueScreen.dart';
 import 'package:capsa/admin/screens/RevenueScreen.dart';
 import 'package:capsa/admin/screens/TransferAmount.dart';
 import 'package:capsa/admin/screens/account_screen.dart';
+import 'package:capsa/admin/screens/anchor_grading.dart';
 import 'package:capsa/admin/screens/anchor_list/anchor_list.dart';
 import 'package:capsa/admin/screens/anchor_onboarding.dart';
 import 'package:capsa/admin/screens/block_account_screen.dart';
@@ -18,9 +19,12 @@ import 'package:capsa/admin/screens/enquiry_list.dart';
 import 'package:capsa/admin/screens/investor_edit.dart';
 import 'package:capsa/admin/screens/investor_list.dart';
 import 'package:capsa/admin/screens/invoices_screen.dart';
+import 'package:capsa/admin/screens/pending-account/pending_account_screen.dart';
 import 'package:capsa/admin/screens/pending_invoice_screen.dart';
-import 'package:capsa/admin/screens/reconciliation_screen.dart';
+import 'package:capsa/admin/screens/reconcilation/reconciliation_screen.dart';
+import 'package:capsa/admin/screens/revenue_tracker.dart';
 import 'package:capsa/admin/screens/transaction_ledger.dart';
+import 'package:capsa/admin/screens/transaction_tracker.dart';
 import 'package:capsa/admin/screens/vendor_edit.dart';
 import 'package:capsa/admin/screens/vendor_list.dart';
 import 'package:capsa/functions/logout.dart';
@@ -28,7 +32,7 @@ import 'package:flutter/material.dart';import 'package:capsa/functions/custom_pr
 import 'package:provider/provider.dart';
 
 final desktopWidgetList = <Widget>[
-  EditTabCall(),
+  //EditTabCall(),
   // HomeScreen(),
 
   DashboardPage(title: 'Dashboard'),
@@ -36,6 +40,10 @@ final desktopWidgetList = <Widget>[
   InvestorList(title: 'Buyers List'),
   VendorList(title: 'Vendors List'),
   AnchorList(title: 'Anchor List'),
+
+  RevenueTracker(title: 'Revenue'),
+
+  TransactionTracker(title: 'Transaction Volume',),
 
   PendingInvoiceScreen(title: 'Pending Invoices'),
 
@@ -45,6 +53,8 @@ final desktopWidgetList = <Widget>[
   EnquiryList(title: 'Buyer On-boarding'),
 
   AnchorOnboarding(),
+
+  AnchorGrading(),
 
   InvoiceScreen(title: 'Invoice List'),
 
@@ -65,13 +75,15 @@ final desktopWidgetList = <Widget>[
 
   EditAccountScreen(),
 
+  PendingAccountScreen(),
+
   BlockAccountScreen(),
 
   EditInvoiceScreen(),
 
   // EditAccountScreen(),
 
-  LogOut(),
+  // LogOut(),
 ];
 
 class EditTabCall extends StatefulWidget {
